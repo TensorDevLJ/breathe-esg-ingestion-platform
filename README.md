@@ -16,8 +16,8 @@ A production-quality full-stack application for ingesting, normalizing, and revi
 6. [Data Flow](#data-flow)
 7. [Key Design Decisions](#key-design-decisions)
 8. [Running Locally](#running-locally)
-9. [Deployment](#deployment)
-10. [Known Limitations](#known-limitations)
+
+9. [Known Limitations](#known-limitations)
 
 ---
 
