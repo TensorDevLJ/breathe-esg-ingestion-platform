@@ -588,41 +588,7 @@ npm run build
 
 ---
 
-## 🌐 Deployment
 
-### Deploy to Render
-
-1. **Backend** (Render's native Django support)
-   ```
-   Build Command: pip install -r requirements.txt && python manage.py migrate
-   Start Command: gunicorn config.wsgi:application
-   Environment Variables:
-     - DATABASE_URL (Render PostgreSQL)
-     - SECRET_KEY (generate)
-     - ALLOWED_HOSTS
-     - DEBUG=False
-     - CORS_ALLOWED_ORIGINS
-   ```
-
-2. **Frontend** (Render Static Site or Vercel)
-   ```
-   Build Command: npm install && npm run build
-   Publish Directory: dist/
-   ```
-
-3. **Database**
-   - Use Render PostgreSQL Add-on
-   - Run migrations post-deploy
-
-### Deploy to Railway
-
-1. Connect GitHub repo
-2. Railway auto-detects Django + Node
-3. Provision PostgreSQL service
-4. Set environment variables
-5. Deploy
-
----
 
 ## ⚠️ Known Limitations
 
@@ -711,7 +677,3 @@ For questions during setup:
 Internal use. Do not distribute.
 
 ---
-
-**Last Updated**: May 2026
-**Status**: Production Ready
-**Tested On**: Python 3.10, Node 16+, PostgreSQL 13+
