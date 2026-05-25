@@ -1,0 +1,93 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+.coverage
+htmlcov/
+
+# Node/Frontend
+node_modules/
+dist/
+.env.local
+.env.*.local
+*.tsbuildinfo
+.pnp
+.pnp.js
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.env
+.env.local
+
+# Deployment
+*.pem
+*.key
+.aws/
+.gcloud/
+
+# Testing
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+
+# IDE
+*.sublime-workspace
+*.sublime-project
+frontend/node_modules
+
+
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend/.pytest_cache/
+backend/venv

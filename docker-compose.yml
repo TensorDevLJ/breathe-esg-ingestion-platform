@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: breathe-esg-db
+    environment:
+      POSTGRES_DB: breathe_esg
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django Backend
+  django:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: breathe-esg-api
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py createsuperuser --noinput --username admin --email admin@localhost || true &&
+             python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-key-change-in-production
+      - DB_NAME=breathe_esg
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - CORS_ALLOWED_ORIGINS=http://localhost:5173
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./Backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # React Frontend
+  frontend:
+    image: node:18
+    container_name: breathe-esg-ui
+    working_dir: /app
+    command: npm run dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./Frontend:/app
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    depends_on:
+      - django
+
+  # Redis (optional, for Celery)
+  redis:
+    image: redis:7
+    container_name: breathe-esg-cache
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: breathe-esg-network

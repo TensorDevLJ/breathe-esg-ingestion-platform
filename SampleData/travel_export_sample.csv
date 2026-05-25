@@ -1,0 +1,8 @@
+Employee,TravelType,Origin,Destination,Distance,AirportCode,HotelNights,TravelDate,Vendor
+john.doe@company.de,FLIGHT,Berlin,London,900.00,LHR,2,2024-01-10,Lufthansa
+jane.smith@company.de,FLIGHT,Berlin,New York,6300.00,JFK,5,2024-01-15,United Airlines
+john.doe@company.de,HOTEL,Berlin,London,,,2,2024-01-10,Hilton Hotels
+jane.smith@company.de,HOTEL,Berlin,New York,,,5,2024-01-15,Marriott
+hans.mueller@company.de,GROUND,Berlin,Hamburg,,,,2024-02-01,Deutsche Bahn
+john.doe@company.de,FLIGHT,London,Berlin,900.00,TXL,1,2024-01-12,Lufthansa
+jane.smith@company.de,FLIGHT,New York,Berlin,6300.00,BER,1,2024-01-20,Air Berlin

@@ -1,0 +1,8 @@
+PlantCode,Material,MaterialCode,Quantity,Unit,Date,DocumentType,Vendor
+PL001,Diesel Fuel,MAT-001,1500.00,L,2024-01-15,FUEL,Shell Germany
+PL001,Gasoline,MAT-002,800.50,L,2024-01-16,FUEL,Esso
+PL002,Natural Gas,MAT-003,2500.00,m³,2024-01-15,FUEL,VNG
+FA_BERLIN,Office Supplies,MAT-004,50.00,kg,2024-01-20,PROCUREMENT,Staples GmbH
+FA_BERLIN,Packaging Materials,MAT-005,150.75,kg,2024-01-21,PROCUREMENT,Papierwerke XYZ
+PL003,Diesel Fuel,MAT-001,2100.00,L,2024-02-01,FUEL,Shell Germany
+PL001,LPG,MAT-006,500.00,L,2024-02-05,FUEL,Flüssiggas AG
