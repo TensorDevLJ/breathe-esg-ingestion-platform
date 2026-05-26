@@ -20,7 +20,14 @@ SECRET_KEY = env('SECRET_KEY', default='dev-key-change-in-production')
 
 DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env.list(
+    'ALLOWED_HOSTS',
+    default=[
+        'localhost',
+        '127.0.0.1',
+        'breathe-esg-backend-aeho.onrender.com'
+    ]
+)
 
 # ============================================================================
 # INSTALLED APPS
@@ -89,7 +96,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+        default=env(
+            'DATABASE_URL',
+            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+        ),
+        conn_max_age=600
     )
 }
 
@@ -124,6 +135,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # WhiteNoise configuration
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+SECURE_PROXY_SSL_HEADER = (
+    'HTTP_X_FORWARDED_PROTO',
+    'https'
+)
 
 # ============================================================================
 # REST FRAMEWORK & AUTHENTICATION
@@ -174,6 +190,7 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://your-frontend-url.onrender.com"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
