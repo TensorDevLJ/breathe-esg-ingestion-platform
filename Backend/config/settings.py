@@ -20,14 +20,12 @@ SECRET_KEY = env('SECRET_KEY', default='dev-key-change-in-production')
 
 DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = env.list(
-    'ALLOWED_HOSTS',
-    default=[
-        'localhost',
-        '127.0.0.1',
-        'breathe-esg-backend-aeho.onrender.com'
-    ]
-)
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'breathe-esg-backend-aeho.onrender.com',
+    'breathe-esg-frontend-likhitha.onrender.com'
+]
 
 # ============================================================================
 # INSTALLED APPS
@@ -190,7 +188,9 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://your-frontend-url.onrender.com"
+   
+    "https://breathe-esg-frontend-likhitha.onrender.com",
+
 ]
 
 CORS_ALLOW_CREDENTIALS = True
