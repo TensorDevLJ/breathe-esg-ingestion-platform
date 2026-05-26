@@ -46,9 +46,14 @@ def upload_csv(request):
 
         datasource, _ = DataSource.objects.get_or_create(
 
-           name="TRAVEL"
+            name="TRAVEL",
 
-        )
+            defaults={
+               "company": company,
+              "is_active": True
+    }
+
+)
 
         count = 0
         suspicious_count = 0
