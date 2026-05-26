@@ -34,8 +34,21 @@ def upload_csv(request):
 
         df = pd.read_csv(file)
 
-        company = Company.objects.first()
-        datasource = DataSource.objects.first()
+        company, _ = Company.objects.get_or_create(
+
+            name="Breathe ESG",
+
+            defaults={
+               "is_active": True
+           }
+
+         )
+
+        datasource, _ = DataSource.objects.get_or_create(
+
+           name="TRAVEL"
+
+        )
 
         count = 0
         suspicious_count = 0
