@@ -209,11 +209,13 @@ class ReviewQueue(UUIDMixin, TimestampedMixin, TenantMixin, models.Model):
     ]
     
     normalized_record = models.OneToOneField(
-        NormalizedEmissionRecord,
-        on_delete=models.CASCADE,
-        related_name='review_queue_item',
-        help_text='Record requiring review'
-    )
+    NormalizedEmissionRecord,
+    on_delete=models.CASCADE,
+    related_name='review_queue_item',
+    null=True,
+    blank=True,
+    help_text='Record requiring review'
+)
     reason_flagged = models.CharField(
         max_length=255,
         help_text='Summary of why flagged'
