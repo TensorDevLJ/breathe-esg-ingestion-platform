@@ -1,173 +1,454 @@
 import { useState, useEffect } from 'react'
 import { records } from '../api/endpoints'
-import { Eye, AlertTriangle } from 'lucide-react'
+import {
+  Eye,
+  AlertTriangle,
+  RefreshCw,
+  X
+} from 'lucide-react'
+
 
 export default function RecordTable() {
-  const [data, setData] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({
-    sourceType: '',
-    isFlagged: '',
-    page: 1,
+
+  const [data, setData] = useState({
+    count: 0,
+    results: []
   })
 
+  const [loading, setLoading] = useState(true)
+
+  const [selectedRecord, setSelectedRecord] =
+    useState(null)
+
+
+
   useEffect(() => {
+
     fetchRecords()
-  }, [filters])
+
+  }, [])
+
+
 
   const fetchRecords = async () => {
+
     setLoading(true)
+
     try {
-      const params = {
-        page: filters.page,
-        ...(filters.sourceType && { source_type: filters.sourceType }),
-        ...(filters.isFlagged && { is_flagged: filters.isFlagged === 'true' }),
-      }
-      const response = await records.list(params)
-      setData(response.data)
-    } catch (error) {
-      console.error('Failed to fetch records:', error)
-    } finally {
-      setLoading(false)
+
+      const response =
+        await records.list()
+
+      setData({
+
+        count:
+          response.data.results?.length || 0,
+
+        results:
+          response.data.results || []
+
+      })
+
     }
+
+    catch (error) {
+
+      console.error(
+        "Failed to fetch records:",
+        error
+      )
+
+    }
+
+    finally {
+
+      setLoading(false)
+
+    }
+
   }
 
+
+
   return (
-    <div className="bg-white rounded-lg shadow">
-      {/* Filters */}
-      <div className="p-6 border-b border-gray-200 flex gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Source Type
-          </label>
-          <select
-            value={filters.sourceType}
-            onChange={(e) => setFilters({ ...filters, sourceType: e.target.value, page: 1 })}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+
+    <>
+
+      <div className="bg-white rounded-lg shadow">
+
+
+        {/* header */}
+
+        <div className="p-6 border-b flex justify-between items-center">
+
+          <div>
+
+            <h2 className="text-2xl font-bold">
+
+              All Records
+
+            </h2>
+
+            <p className="text-sm text-gray-500">
+
+              View uploaded ESG records
+
+            </p>
+
+          </div>
+
+
+          <button
+            onClick={fetchRecords}
+            className="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
           >
-            <option value="">All Sources</option>
-            <option value="SAP">SAP</option>
-            <option value="ELECTRICITY">Electricity</option>
-            <option value="TRAVEL">Travel</option>
-          </select>
+
+            <RefreshCw size={16}/>
+
+            Refresh
+
+          </button>
+
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Status
-          </label>
-          <select
-            value={filters.isFlagged}
-            onChange={(e) => setFilters({ ...filters, isFlagged: e.target.value, page: 1 })}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          >
-            <option value="">All Records</option>
-            <option value="false">Approved</option>
-            <option value="true">Flagged</option>
-          </select>
-        </div>
-      </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                Facility
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                Source
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                Quantity
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {loading ? (
+
+        {/* table */}
+
+        <div className="overflow-x-auto">
+
+          <table className="w-full">
+
+            <thead className="bg-gray-50 border-b">
+
               <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                  Loading...
-                </td>
+
+                <th className="px-6 py-4 text-left">
+                  Facility
+                </th>
+
+                <th className="px-6 py-4 text-left">
+                  Source
+                </th>
+
+                <th className="px-6 py-4 text-left">
+                  Quantity
+                </th>
+
+                <th className="px-6 py-4 text-left">
+                  Date
+                </th>
+
+                <th className="px-6 py-4 text-left">
+                  Status
+                </th>
+
+                <th className="px-6 py-4 text-left">
+                  Actions
+                </th>
+
               </tr>
-            ) : data.results?.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                  No records found
-                </td>
-              </tr>
-            ) : (
-              data.results?.map((record) => (
-                <tr key={record.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {record.facility_name || record.facility_code}
+
+            </thead>
+
+
+
+            <tbody>
+
+              {loading ? (
+
+                <tr>
+
+                  <td
+                    colSpan="6"
+                    className="text-center py-6"
+                  >
+
+                    Loading...
+
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {record.source_type}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {record.quantity} {record.unit}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(record.date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-sm">
-                    {record.is_flagged ? (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
-                        <AlertTriangle size={14} />
-                        Flagged
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                        Approved
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm">
-                    <button className="text-blue-600 hover:text-blue-900 flex items-center gap-1">
-                      <Eye size={16} />
-                      View
-                    </button>
-                  </td>
+
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+
+              )
+
+              : data.results.length===0 ? (
+
+                <tr>
+
+                  <td
+                    colSpan="6"
+                    className="text-center py-6"
+                  >
+
+                    No Records Found
+
+                  </td>
+
+                </tr>
+
+              )
+
+              :
+
+              (
+
+                data.results.map((record)=>(
+
+                  <tr
+                    key={record.id}
+                    className="border-b hover:bg-gray-50"
+                  >
+
+                    <td className="px-6 py-4">
+
+                      {record.facility_name ||
+
+                       record.facility_code ||
+
+                       "Unknown"}
+
+                    </td>
+
+
+
+                    <td className="px-6 py-4">
+
+                      {record.source_type}
+
+                    </td>
+
+
+
+                    <td className="px-6 py-4">
+
+                      {record.quantity}
+
+                      {" "}
+
+                      {record.unit}
+
+                    </td>
+
+
+
+                    <td className="px-6 py-4">
+
+                      {
+
+                        record.date ?
+
+                        new Date(
+                          record.date
+                        ).toLocaleDateString()
+
+                        :
+
+                        "-"
+
+                      }
+
+                    </td>
+
+
+
+                    <td className="px-6 py-4">
+
+                      {
+
+                      record.is_flagged ?
+
+                      (
+
+                      <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 flex items-center gap-1 w-fit">
+
+                      <AlertTriangle size={14}/>
+
+                      Flagged
+
+                      </span>
+
+                      )
+
+                      :
+
+                      (
+
+                      <span className="px-3 py-1 rounded-full bg-green-100 text-green-700">
+
+                      Approved
+
+                      </span>
+
+                      )
+
+                      }
+
+                    </td>
+
+
+
+                    <td className="px-6 py-4">
+
+                      <button
+
+                        onClick={()=>setSelectedRecord(record)}
+
+                        className="text-blue-600 flex items-center gap-1"
+
+                      >
+
+                        <Eye size={16}/>
+
+                        View
+
+                      </button>
+
+                    </td>
+
+                  </tr>
+
+                ))
+
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+
+        <div className="p-4 border-t">
+
+          Total Records:
+
+          {" "}
+
+          <b>
+
+          {data.count}
+
+          </b>
+
+        </div>
+
       </div>
 
-      {/* Pagination */}
-      <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-        <p className="text-sm text-gray-600">
-          Page {filters.page} of {Math.ceil((data.count || 0) / 50)}
-        </p>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-            disabled={filters.page === 1}
-            className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-            disabled={filters.page >= Math.ceil((data.count || 0) / 50)}
-            className="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+
+
+
+      {/* popup */}
+
+
+      {
+
+      selectedRecord &&
+
+      (
+
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+
+      <div className="bg-white p-6 rounded-xl w-[450px]">
+
+      <div className="flex justify-between mb-4">
+
+      <h2 className="text-xl font-bold">
+
+      Record Details
+
+      </h2>
+
+      <button
+      onClick={()=>setSelectedRecord(null)}
+      >
+
+      <X/>
+
+      </button>
+
       </div>
-    </div>
+
+
+      <div className="space-y-3">
+
+      <p>
+
+      <b>Facility:</b>
+
+      {" "}
+
+      {selectedRecord.facility_name}
+
+      </p>
+
+      <p>
+
+      <b>Source:</b>
+
+      {" "}
+
+      {selectedRecord.source_type}
+
+      </p>
+
+      <p>
+
+      <b>Quantity:</b>
+
+      {" "}
+
+      {selectedRecord.quantity}
+
+      {" "}
+
+      {selectedRecord.unit}
+
+      </p>
+
+      <p>
+
+      <b>Date:</b>
+
+      {" "}
+
+      {selectedRecord.date}
+
+      </p>
+
+      <p>
+
+      <b>Status:</b>
+
+      {" "}
+
+      {
+
+      selectedRecord.is_flagged ?
+
+      "Flagged"
+
+      :
+
+      "Approved"
+
+      }
+
+      </p>
+
+      </div>
+
+      </div>
+
+      </div>
+
+      )
+
+      }
+
+    </>
+
   )
+
 }

@@ -1,5 +1,6 @@
 import pandas as pd
 from datetime import date
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -19,49 +20,43 @@ def upload_csv(request):
 
     if request.method != "POST":
         return JsonResponse({
-            "error":"POST request required"
+            "error": "POST request required"
         })
 
     if "file" not in request.FILES:
         return JsonResponse({
-            "error":"No file uploaded"
+            "error": "No file uploaded"
         })
 
-    file=request.FILES["file"]
+    file = request.FILES["file"]
 
     try:
 
-        df=pd.read_csv(file)
+        df = pd.read_csv(file)
 
-        company=Company.objects.first()
+        company = Company.objects.first()
+        datasource = DataSource.objects.first()
 
-        datasource=DataSource.objects.first()
+        count = 0
+        suspicious_count = 0
 
-        count=0
+        for i, row in df.iterrows():
 
-        suspicious_count=0
-
-
-        for i,row in df.iterrows():
-
-            quantity=float(
-                row.get("quantity",0)
+            quantity = float(
+                row.get("quantity", 0)
             )
 
+            # suspicious rule
+            if quantity > 3000:
 
-            if quantity>3000:
-
-                status="FAILED"
-
-                suspicious_count+=1
+                status = "FAILED"
+                suspicious_count += 1
 
             else:
 
-                status="SUCCESS"
+                status = "SUCCESS"
 
-
-
-            raw_record,created=RawRecord.objects.get_or_create(
+            raw_record, created = RawRecord.objects.get_or_create(
 
                 company=company,
 
@@ -69,58 +64,71 @@ def upload_csv(request):
 
                 file_name=file.name,
 
-                row_number=i+1,
+                row_number=i + 1,
 
                 defaults={
 
-                    "raw_data":row.to_dict(),
+                    "raw_data": row.to_dict(),
 
-                    "processing_status":status
-
+                    "processing_status": status
                 }
-
             )
 
 
             if created:
 
-                record=NormalizedEmissionRecord.objects.create(
+                source = datasource.name.upper()
+
+                facility = "Corporate Travel"
+
+                if source == "SAP":
+                    facility = "SAP Operations"
+
+                elif source == "ELECTRICITY":
+                    facility = "Bangalore Manufacturing Plant"
+
+                elif source == "TRAVEL":
+                    facility = "Corporate Travel"
+
+
+                record = NormalizedEmissionRecord.objects.create(
 
                     company=company,
 
                     raw_record=raw_record,
 
-                    source_type="TRAVEL",
+                    source_type=source,
 
                     scope=3,
 
-                    category="travel_ground",
+                    category="general",
 
-                    facility_code=f"TRAVEL{i+1}",
+                    facility_code=f"REC{i+1}",
 
-                    facility_name="Corporate Travel",
+                    facility_name=facility,
 
                     quantity=quantity,
 
-                    unit="km",
+                    unit=row.get("unit", "km"),
 
-                    quantity_standardized=quantity*0.25,
+                    quantity_standardized=quantity * 0.25,
 
                     date=date.today(),
 
-                    is_flagged=(quantity>3000),
+                    is_flagged=(quantity > 3000),
 
                     flag_reason={
 
                         "suspicious":
                         "high quantity"
 
-                    } if quantity>3000 else {}
+                    } if quantity > 3000 else {}
 
                 )
 
 
-                if quantity>3000:
+                # create review item only for flagged records
+                if quantity > 3000:
 
                     ReviewQueue.objects.create(
 
@@ -133,10 +141,10 @@ def upload_csv(request):
                         severity="HIGH",
 
                         status="PENDING"
-
                     )
 
 
+                # create audit history
                 AuditLog.objects.create(
 
                     company=company,
@@ -147,114 +155,114 @@ def upload_csv(request):
 
                 )
 
-
-            count+=1
+            count += 1
 
 
         return JsonResponse({
 
-            "message":"Uploaded Successfully",
+            "message": "Uploaded Successfully",
 
-            "records_imported":count,
+            "records_imported": count,
 
-            "suspicious_records":suspicious_count
+            "suspicious_records": suspicious_count
 
         })
-
 
     except Exception as e:
 
         return JsonResponse({
 
-            "error":str(e)
+            "error": str(e)
 
         })
 
 
-
-
 def dashboard_stats(request):
 
-    total=NormalizedEmissionRecord.objects.count()
+    total = NormalizedEmissionRecord.objects.count()
 
-    flagged=NormalizedEmissionRecord.objects.filter(
+    flagged = NormalizedEmissionRecord.objects.filter(
         is_flagged=True
     ).count()
 
-    approved=NormalizedEmissionRecord.objects.filter(
+    approved = NormalizedEmissionRecord.objects.filter(
         is_flagged=False
     ).count()
 
-    pending=ReviewQueue.objects.filter(
+    pending = ReviewQueue.objects.filter(
         status="PENDING"
     ).count()
 
 
-    by_source={}
-    by_scope={}
+    by_source = {}
+    by_scope = {}
 
 
     for item in (
+
         NormalizedEmissionRecord.objects
         .values_list("source_type")
+
     ):
 
-        source=item[0]
+        source = item[0]
 
-        by_source[source]=(
-            by_source.get(source,0)+1
+        by_source[source] = (
+
+            by_source.get(source, 0) + 1
         )
 
 
     for item in (
+
         NormalizedEmissionRecord.objects
         .values_list("scope")
+
     ):
 
-        scope=str(item[0])
+        scope = str(item[0])
 
-        by_scope[scope]=(
-            by_scope.get(scope,0)+1
+        by_scope[scope] = (
+
+            by_scope.get(scope, 0) + 1
         )
 
 
     return JsonResponse({
 
-        "total_records":total,
+        "total_records": total,
 
-        "flagged_count":flagged,
+        "flagged_count": flagged,
 
-        "approved_count":approved,
+        "approved_count": approved,
 
-        "pending_count":pending,
+        "pending_count": pending,
 
-        "by_source":by_source,
+        "by_source": by_source,
 
-        "by_scope":by_scope,
+        "by_scope": by_scope,
 
-        "by_status":{
+        "by_status": {
 
-            "approved":approved,
+            "approved": approved,
 
-            "flagged":flagged
-
+            "flagged": flagged
         }
 
     })
 
 
-
 def records_list(request):
 
-    records=NormalizedEmissionRecord.objects.all()
+    records = NormalizedEmissionRecord.objects.all()
 
-    data=[]
+    data = []
 
     for record in records:
 
         data.append({
 
-            "id":str(record.id),
+            "id": str(record.id),
 
             "facility_name":
             record.facility_name,
@@ -281,28 +289,26 @@ def records_list(request):
 
     return JsonResponse({
 
-        "results":data
+        "results": data
 
     })
 
 
-
-
 def review_queue(request):
 
-    items=ReviewQueue.objects.filter(
+    items = ReviewQueue.objects.filter(
         status="PENDING"
     )
 
-    data=[]
+    data = []
 
     for item in items:
 
-        record=item.normalized_record
+        record = item.normalized_record
 
         data.append({
 
-            "id":str(item.id),
+            "id": str(item.id),
 
             "severity":
             item.severity,
@@ -310,7 +316,7 @@ def review_queue(request):
             "reason_flagged":
             item.reason_flagged,
 
-            "normalized_record":{
+            "normalized_record": {
 
                 "id":
                 str(record.id),
@@ -336,21 +342,19 @@ def review_queue(request):
 
     return JsonResponse({
 
-        "results":data
+        "results": data
 
     })
 
 
-
-
 @csrf_exempt
-def approve_review(request,id):
+def approve_review(request, id):
 
-    item=ReviewQueue.objects.get(
+    item = ReviewQueue.objects.get(
         id=id
     )
 
-    item.status="APPROVED"
+    item.status = "APPROVED"
 
     item.save()
 
@@ -366,21 +370,19 @@ def approve_review(request,id):
 
     return JsonResponse({
 
-        "message":"approved"
+        "message": "approved"
 
     })
 
 
-
-
 @csrf_exempt
-def reject_review(request,id):
+def reject_review(request, id):
 
-    item=ReviewQueue.objects.get(
+    item = ReviewQueue.objects.get(
         id=id
     )
 
-    item.status="REJECTED"
+    item.status = "REJECTED"
 
     item.save()
 
@@ -396,32 +398,35 @@ def reject_review(request,id):
 
     return JsonResponse({
 
-        "message":"rejected"
+        "message": "rejected"
 
     })
 
 
-
-
 def audit_logs(request):
 
-    logs=AuditLog.objects.all()
+    logs = AuditLog.objects.all().order_by(
+        "-created_at"
+    )
 
-    data=[]
+    data = []
 
     for log in logs:
 
         data.append({
 
-            "id":str(log.id),
+            "id": str(log.id),
 
-            "action":log.action,
+            "action":
+            log.action,
 
-            "created_at":log.created_at,
+            "created_at":
+            log.created_at,
 
-            "record":{
+            "record": {
 
-                "id":str(log.record.id)
+                "id":
+                str(log.record.id)
 
             }
 
@@ -429,6 +434,6 @@ def audit_logs(request):
 
     return JsonResponse({
 
-        "results":data
+        "results": data
 
     })
