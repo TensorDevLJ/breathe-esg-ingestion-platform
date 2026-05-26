@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
+import dj_database_url
 
 # Load environment variables
 env = environ.Env()
@@ -19,7 +20,7 @@ SECRET_KEY = env('SECRET_KEY', default='dev-key-change-in-production')
 
 DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+ALLOWED_HOSTS = ['*']
 
 # ============================================================================
 # INSTALLED APPS
@@ -84,11 +85,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # DATABASE
 # ============================================================================
 
+
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    )
 }
 
 # ============================================================================
@@ -170,10 +172,9 @@ SIMPLE_JWT = {
 # CORS CONFIGURATION
 # ============================================================================
 
-CORS_ALLOWED_ORIGINS = env.list(
-    'CORS_ALLOWED_ORIGINS',
-    default=['http://localhost:5173', 'http://localhost:3000']
-)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
 
 CORS_ALLOW_CREDENTIALS = True
 
