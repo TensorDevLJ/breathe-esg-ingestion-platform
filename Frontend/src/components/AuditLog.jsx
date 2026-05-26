@@ -1,201 +1,537 @@
 import { useState, useEffect } from 'react'
 import { audit } from '../api/endpoints'
-import { History, Download } from 'lucide-react'
+
+import {
+  History,
+  Download,
+  FileSearch
+} from 'lucide-react'
+
 import { formatDistanceToNow } from 'date-fns'
 
 export default function AuditLog() {
-  const [logs, setLogs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({
-    action: '',
-    startDate: '',
-    endDate: '',
-  })
 
-  useEffect(() => {
-    fetchLogs()
-  }, [filters])
+const [logs,setLogs]=useState([])
 
-  const fetchLogs = async () => {
-    setLoading(true)
-    try {
-      const params = {
-        ...(filters.action && { action: filters.action }),
-        ...(filters.startDate && { start_date: filters.startDate }),
-        ...(filters.endDate && { end_date: filters.endDate }),
-      }
-      const response = await audit.list(params)
-      setLogs(response.data.results || [])
-    } catch (error) {
-      console.error('Failed to fetch audit logs:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+const [loading,setLoading]=useState(true)
 
-  const handleExport = async () => {
-    try {
-      const response = await audit.export({
-        ...(filters.action && { action: filters.action }),
-        ...(filters.startDate && { start_date: filters.startDate }),
-        ...(filters.endDate && { end_date: filters.endDate }),
-      })
-      // Trigger download
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', 'audit-log.csv')
-      document.body.appendChild(link)
-      link.click()
-    } catch (error) {
-      console.error('Failed to export audit log:', error)
-    }
-  }
+const [filters,setFilters]=useState({
 
-  const actionIcons = {
-    CREATED: '✨',
-    APPROVED: '✅',
-    REJECTED: '❌',
-    EDITED: '✏️',
-    LOCKED: '🔒',
-  }
+action:'',
+startDate:'',
+endDate:''
 
-  const actionColors = {
-    CREATED: 'bg-blue-50 border-l-4 border-blue-500',
-    APPROVED: 'bg-green-50 border-l-4 border-green-500',
-    REJECTED: 'bg-red-50 border-l-4 border-red-500',
-    EDITED: 'bg-yellow-50 border-l-4 border-yellow-500',
-    LOCKED: 'bg-purple-50 border-l-4 border-purple-500',
-  }
+})
 
-  return (
-    <div className="space-y-6">
-      {/* Filters and Export */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-end justify-between mb-4">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <History size={24} />
-            Audit Trail
-          </h2>
-          <button
-            onClick={handleExport}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2"
-          >
-            <Download size={18} />
-            Export as CSV
-          </button>
-        </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Action Type
-            </label>
-            <select
-              value={filters.action}
-              onChange={(e) => setFilters({ ...filters, action: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="">All Actions</option>
-              <option value="CREATED">Created</option>
-              <option value="APPROVED">Approved</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="EDITED">Edited</option>
-              <option value="LOCKED">Locked</option>
-            </select>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date
-            </label>
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
+useEffect(()=>{
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              End Date
-            </label>
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-        </div>
-      </div>
+fetchLogs()
 
-      {/* Timeline */}
-      <div className="space-y-4">
-        {loading ? (
-          <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-            Loading...
-          </div>
-        ) : logs.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-            No audit logs found
-          </div>
-        ) : (
-          logs.map((log) => (
-            <div
-              key={log.id}
-              className={`rounded-lg shadow p-6 ${actionColors[log.action]}`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{actionIcons[log.action]}</span>
-                  <div>
-                    <h3 className="font-bold text-gray-900">
-                      {log.action.replace('_', ' ')}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      by {log.actor?.email || 'System'} •{' '}
-                      {formatDistanceToNow(new Date(log.created_at), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                  </div>
-                </div>
-                {log.ip_address && (
-                  <p className="text-xs text-gray-500">{log.ip_address}</p>
-                )}
-              </div>
+},[filters])
 
-              {/* Changes */}
-              {log.changes && Object.keys(log.changes).length > 0 && (
-                <div className="bg-white bg-opacity-50 rounded p-3 text-sm">
-                  <p className="font-medium text-gray-900 mb-2">Changes:</p>
-                  <div className="space-y-1">
-                    {Object.entries(log.changes).map(([field, change]) => (
-                      <p key={field} className="text-gray-700">
-                        <span className="font-medium">{field}:</span>{' '}
-                        <span className="line-through text-red-600">
-                          {change.old}
-                        </span>{' '}
-                        →{' '}
-                        <span className="text-green-600 font-medium">
-                          {change.new}
-                        </span>
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* Record reference */}
-              <p className="text-xs text-gray-500 mt-3">
-                Record: {log.record.id.slice(0, 8)}...
-              </p>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  )
+
+const fetchLogs=async()=>{
+
+setLoading(true)
+
+try{
+
+const params={
+
+...(filters.action && {
+
+action:filters.action
+
+}),
+
+
+...(filters.startDate && {
+
+start_date:filters.startDate
+
+}),
+
+
+...(filters.endDate && {
+
+end_date:filters.endDate
+
+})
+
+}
+
+
+const response=
+await audit.list(params)
+
+setLogs(
+response.data.results || []
+)
+
+}
+
+catch(error){
+
+console.log(error)
+
+}
+
+finally{
+
+setLoading(false)
+
+}
+
+}
+
+
+
+const handleExport=()=>{
+
+alert(
+"Audit export initiated"
+)
+
+}
+
+
+
+const actionIcons={
+
+CREATED:"✨",
+
+APPROVED:"✅",
+
+REJECTED:"❌",
+
+EDITED:"✏️",
+
+LOCKED:"🔒"
+
+}
+
+
+
+const actionColors={
+
+CREATED:
+"border-blue-500 bg-blue-50",
+
+APPROVED:
+"border-green-500 bg-green-50",
+
+REJECTED:
+"border-red-500 bg-red-50",
+
+EDITED:
+"border-yellow-500 bg-yellow-50",
+
+LOCKED:
+"border-purple-500 bg-purple-50"
+
+}
+
+
+
+return(
+
+<div className="space-y-6">
+
+
+{/* header */}
+
+
+<div className="bg-white rounded-xl shadow p-6">
+
+<div className="flex justify-between items-center mb-6">
+
+<h2 className="text-2xl font-bold flex gap-2 items-center">
+
+<History size={25}/>
+
+Audit Trail
+
+</h2>
+
+
+<button
+
+onClick={handleExport}
+
+className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex gap-2"
+
+>
+
+<Download size={18}/>
+
+Export
+
+</button>
+
+</div>
+
+
+
+
+<div className="grid md:grid-cols-3 gap-4">
+
+
+<select
+
+value={filters.action}
+
+onChange={(e)=>
+
+setFilters({
+
+...filters,
+
+action:e.target.value
+
+})
+
+}
+
+className="border rounded-lg p-3"
+
+>
+
+<option value="">
+
+All Actions
+
+</option>
+
+<option value="CREATED">
+
+Created
+
+</option>
+
+<option value="APPROVED">
+
+Approved
+
+</option>
+
+<option value="REJECTED">
+
+Rejected
+
+</option>
+
+<option value="EDITED">
+
+Edited
+
+</option>
+
+<option value="LOCKED">
+
+Locked
+
+</option>
+
+</select>
+
+
+
+<input
+
+type="date"
+
+value={filters.startDate}
+
+onChange={(e)=>
+
+setFilters({
+
+...filters,
+
+startDate:e.target.value
+
+})
+
+}
+
+className="border rounded-lg p-3"
+
+/>
+
+
+
+<input
+
+type="date"
+
+value={filters.endDate}
+
+onChange={(e)=>
+
+setFilters({
+
+...filters,
+
+endDate:e.target.value
+
+})
+
+}
+
+className="border rounded-lg p-3"
+
+/>
+
+</div>
+
+</div>
+
+
+
+
+
+{
+
+loading ?
+
+(
+
+<div className="bg-white rounded-xl p-10 text-center shadow">
+
+Loading audit history...
+
+</div>
+
+)
+
+:
+
+logs.length===0 ?
+
+(
+
+<div className="bg-white rounded-xl p-10 text-center shadow">
+
+<FileSearch
+size={55}
+className="mx-auto text-gray-300"
+/>
+
+<h2 className="text-xl font-bold mt-4">
+
+No Audit History Found
+
+</h2>
+
+<p className="text-gray-500 mt-2">
+
+Actions such as uploads, approvals
+and edits will appear here
+
+</p>
+
+</div>
+
+)
+
+:
+
+(
+
+logs.map((log)=>(
+
+<div
+
+key={log.id}
+
+className={`border-l-4 rounded-xl shadow p-6
+
+${actionColors[log.action]}
+
+`}
+
+>
+
+
+<div className="flex justify-between mb-3">
+
+<div className="flex gap-3">
+
+<div className="text-3xl">
+
+{
+
+actionIcons[log.action]
+
+}
+
+</div>
+
+
+<div>
+
+<h3 className="font-bold">
+
+{
+
+log.action
+
+}
+
+</h3>
+
+
+<p className="text-sm text-gray-600">
+
+by
+
+{" "}
+
+{
+
+log.actor?.email ||
+
+"System"
+
+}
+
+{" • "}
+
+{
+
+log.created_at ?
+
+formatDistanceToNow(
+
+new Date(
+
+log.created_at
+
+),
+
+{
+
+addSuffix:true
+
+}
+
+)
+
+:
+
+"-"
+
+}
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+{
+
+log.changes &&
+
+Object.keys(log.changes).length>0 && (
+
+<div className="bg-white p-4 rounded-lg mt-4">
+
+<h4 className="font-bold mb-2">
+
+Changes
+
+</h4>
+
+
+{
+
+Object.entries(
+
+log.changes
+
+).map(
+
+([field,change])=>(
+
+<div
+key={field}
+className="text-sm mb-2"
+>
+
+<b>
+
+{field}
+
+</b>
+
+:
+
+<span className="text-red-600 line-through ml-2">
+
+{change.old}
+
+</span>
+
+{" → "}
+
+<span className="text-green-600">
+
+{change.new}
+
+</span>
+
+</div>
+
+)
+
+)
+
+}
+
+</div>
+
+)
+
+}
+
+
+
+<p className="text-xs text-gray-500 mt-4">
+
+Record ID:
+
+{" "}
+
+{
+
+log.record?.id ||
+
+"-"
+
+}
+
+</p>
+
+</div>
+
+))
+
+)
+
+}
+
+</div>
+
+)
+
 }

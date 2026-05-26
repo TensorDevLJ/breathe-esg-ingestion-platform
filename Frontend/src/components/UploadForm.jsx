@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import { Upload, FileUp, AlertCircle } from 'lucide-react'
+import {
+  Upload,
+  FileUp,
+  AlertCircle,
+  CheckCircle
+} from 'lucide-react'
+
 import { uploads } from '../api/endpoints'
 
 export default function UploadForm() {
@@ -11,15 +17,15 @@ export default function UploadForm() {
 
   const handleFileChange = (e) => {
 
-    const selectedFile = e.target.files[0]
+    const selectedFile = e.target.files?.[0]
 
     if (!selectedFile) return
 
     if (!selectedFile.name.endsWith('.csv')) {
 
       setMessage({
-        type:'error',
-        text:'Please upload CSV only'
+        type: 'error',
+        text: 'Only CSV files are supported'
       })
 
       return
@@ -29,15 +35,16 @@ export default function UploadForm() {
     setMessage(null)
   }
 
-  const handleSubmit = async(e)=>{
+
+  const handleSubmit = async (e) => {
 
     e.preventDefault()
 
-    if(!file){
+    if (!file) {
 
       setMessage({
-        type:'error',
-        text:'Please select a file'
+        type: 'error',
+        text: 'Please select a file'
       })
 
       return
@@ -45,159 +52,311 @@ export default function UploadForm() {
 
     setLoading(true)
 
-    try{
+    try {
 
       let response
 
-      if(sourceType==="SAP"){
+      if (sourceType === "SAP") {
 
-        response=await uploads.uploadSAP(file)
+        response =
+          await uploads.uploadSAP(file)
 
-      }else if(sourceType==="ELECTRICITY"){
-
-        response=await uploads.uploadElectricity(file)
-
-      }else{
-
-        response=await uploads.uploadTravel(file)
       }
+
+      else if (sourceType === "ELECTRICITY") {
+
+        response =
+          await uploads.uploadElectricity(file)
+
+      }
+
+      else {
+
+        response =
+          await uploads.uploadTravel(file)
+
+      }
+
 
       setMessage({
 
-        type:'success',
+        type: 'success',
 
-        text:
-        `Imported: ${response.data.records_imported}
-        
-Suspicious: ${response.data.suspicious_records}`
+        text: `✓ Upload Successful
+
+Records Imported: ${response.data.records_imported}
+
+Suspicious Records: ${response.data.suspicious_records}
+
+Review Queue Updated`
 
       })
 
       setFile(null)
 
-    }catch(error){
+    }
+
+    catch (error) {
 
       setMessage({
 
-        type:'error',
+        type: 'error',
 
         text:
-        error.response?.data?.error ||
-        "Upload failed"
+          error.response?.data?.error ||
+          'Upload failed'
 
       })
 
-    }finally{
+    }
+
+    finally {
 
       setLoading(false)
+
     }
 
   }
 
+
   return (
 
-<div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-2xl shadow border p-8">
 
-<h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+      {/* Header */}
 
-<Upload size={20}/>
-Upload CSV
+      <div className="flex items-center gap-3 mb-6">
 
-</h2>
+        <div className="bg-blue-100 p-3 rounded-xl">
 
-<form onSubmit={handleSubmit}>
+          <Upload
+            className="text-blue-600"
+            size={25}
+          />
 
-<div className="mb-4">
+        </div>
 
-<label className="font-medium">
+        <div>
 
-Source Type
+          <h2 className="text-2xl font-bold">
 
-</label>
+            Upload ESG Data
 
-<select
-value={sourceType}
-onChange={(e)=>setSourceType(e.target.value)}
-className="w-full border p-2 rounded mt-2"
->
+          </h2>
 
-<option value="SAP">SAP</option>
+          <p className="text-sm text-gray-500">
 
-<option value="ELECTRICITY">
+            Import enterprise datasets
 
-Electricity
+          </p>
 
-</option>
+        </div>
 
-<option value="TRAVEL">
+      </div>
 
-Travel
 
-</option>
 
-</select>
+      <form onSubmit={handleSubmit}>
 
-</div>
 
-<div className="mb-4">
+        {/* Source */}
 
-<input
-type="file"
-accept=".csv"
-onChange={handleFileChange}
-/>
+        <div className="mb-6">
 
-{file && (
+          <label className="font-medium">
 
-<p className="text-sm text-gray-600 mt-2">
+            Data Source
 
-Selected: {file.name}
+          </label>
 
-</p>
+          <select
 
-)}
+            value={sourceType}
 
-</div>
+            onChange={(e)=>
+              setSourceType(e.target.value)
+            }
 
-{message &&(
+            className="w-full mt-2 border rounded-xl p-3"
 
-<div className={`p-3 rounded mb-4 ${
-message.type==="error"
-?'bg-red-100 text-red-700'
-:'bg-green-100 text-green-700'
-}`}>
+          >
 
-<AlertCircle
-size={18}
-className="inline mr-2"
-/>
+            <option value="SAP">
 
-{message.text}
+              SAP Procurement
 
-</div>
+            </option>
 
-)}
+            <option value="ELECTRICITY">
 
-<button
+              Utility Electricity
 
-type="submit"
+            </option>
 
-disabled={loading}
+            <option value="TRAVEL">
 
-className="w-full bg-blue-600 text-white p-2 rounded"
+              Corporate Travel
 
->
+            </option>
 
-{loading
-? "Uploading..."
-: "Upload File"}
+          </select>
 
-</button>
+        </div>
 
-</form>
 
-</div>
 
-)
+        {/* Upload area */}
+
+        <div className="mb-6">
+
+          <label className="font-medium">
+
+            Upload CSV
+
+          </label>
+
+          <div className="mt-3 border-2 border-dashed rounded-xl p-8 text-center hover:border-blue-500 transition">
+
+            <input
+
+              type="file"
+
+              accept=".csv"
+
+              onChange={handleFileChange}
+
+              className="hidden"
+
+              id="upload"
+
+            />
+
+            <label
+              htmlFor="upload"
+              className="cursor-pointer"
+            >
+
+              <FileUp
+                size={40}
+                className="mx-auto text-gray-400"
+              />
+
+              <p className="mt-3 text-gray-600">
+
+                {
+                  file
+                    ? file.name
+                    : "Click here to upload CSV"
+                }
+
+              </p>
+
+            </label>
+
+          </div>
+
+        </div>
+
+
+
+        {/* Help */}
+
+        <div className="bg-gray-50 rounded-xl p-4 mb-6">
+
+          <p className="font-medium mb-2">
+
+            Supported formats:
+
+          </p>
+
+          <ul className="text-sm text-gray-600 space-y-1">
+
+            <li>• SAP exports</li>
+
+            <li>• Utility portal CSV</li>
+
+            <li>• Corporate travel datasets</li>
+
+          </ul>
+
+        </div>
+
+
+
+        {/* Message */}
+
+        {message && (
+
+          <div
+
+            className={`rounded-xl p-4 mb-6 flex gap-3
+
+            ${
+              message.type === "error"
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+            }`}
+
+          >
+
+            {
+
+              message.type === "error"
+
+              ?
+
+              <AlertCircle />
+
+              :
+
+              <CheckCircle />
+
+            }
+
+            <div className="whitespace-pre-line">
+
+              {message.text}
+
+            </div>
+
+          </div>
+
+        )}
+
+
+
+        {/* Button */}
+
+        <button
+
+          type="submit"
+
+          disabled={loading}
+
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-3 font-medium"
+
+        >
+
+          {
+
+            loading
+
+            ?
+
+            "Uploading..."
+
+            :
+
+            "Upload File"
+
+          }
+
+        </button>
+
+      </form>
+
+    </div>
+
+  )
 
 }

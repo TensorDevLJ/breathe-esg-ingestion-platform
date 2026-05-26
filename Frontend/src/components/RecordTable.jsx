@@ -1,66 +1,66 @@
 import { useState, useEffect } from 'react'
 import { records } from '../api/endpoints'
+
 import {
   Eye,
   AlertTriangle,
   RefreshCw,
-  X
+  X,
+  FileText
 } from 'lucide-react'
-
 
 export default function RecordTable() {
 
-  const [data, setData] = useState({
-    count: 0,
-    results: []
+  const [data,setData]=useState({
+    count:0,
+    results:[]
   })
 
-  const [loading, setLoading] = useState(true)
+  const [loading,setLoading]=useState(true)
 
-  const [selectedRecord, setSelectedRecord] =
+  const [selectedRecord,setSelectedRecord]=
     useState(null)
 
 
-
-  useEffect(() => {
+  useEffect(()=>{
 
     fetchRecords()
 
-  }, [])
+  },[])
 
 
 
-  const fetchRecords = async () => {
+  const fetchRecords=async()=>{
 
     setLoading(true)
 
-    try {
+    try{
 
-      const response =
+      const response=
         await records.list()
 
       setData({
 
         count:
-          response.data.results?.length || 0,
+        response.data.results?.length || 0,
 
         results:
-          response.data.results || []
+        response.data.results || []
 
       })
 
     }
 
-    catch (error) {
+    catch(error){
 
       console.error(
-        "Failed to fetch records:",
+        "Failed fetching records",
         error
       )
 
     }
 
-    finally {
+    finally{
 
       setLoading(false)
 
@@ -70,382 +70,441 @@ export default function RecordTable() {
 
 
 
-  return (
+  return(
 
     <>
 
-      <div className="bg-white rounded-lg shadow">
+    <div className="bg-white rounded-2xl shadow border">
 
+      {/* Header */}
 
-        {/* header */}
+      <div className="p-6 border-b flex justify-between items-center">
 
-        <div className="p-6 border-b flex justify-between items-center">
+        <div>
 
-          <div>
+          <h2 className="text-2xl font-bold">
 
-            <h2 className="text-2xl font-bold">
+            All Records
 
-              All Records
+          </h2>
 
-            </h2>
+          <p className="text-sm text-gray-500 mt-1">
 
-            <p className="text-sm text-gray-500">
+            Uploaded ESG datasets
 
-              View uploaded ESG records
-
-            </p>
-
-          </div>
-
-
-          <button
-            onClick={fetchRecords}
-            className="flex items-center gap-2 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-          >
-
-            <RefreshCw size={16}/>
-
-            Refresh
-
-          </button>
+          </p>
 
         </div>
 
 
+        <button
 
-        {/* table */}
+        onClick={fetchRecords}
 
-        <div className="overflow-x-auto">
+        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
 
-          <table className="w-full">
+        >
 
-            <thead className="bg-gray-50 border-b">
+        <RefreshCw size={16}/>
 
-              <tr>
+        Refresh
 
-                <th className="px-6 py-4 text-left">
-                  Facility
-                </th>
-
-                <th className="px-6 py-4 text-left">
-                  Source
-                </th>
-
-                <th className="px-6 py-4 text-left">
-                  Quantity
-                </th>
-
-                <th className="px-6 py-4 text-left">
-                  Date
-                </th>
-
-                <th className="px-6 py-4 text-left">
-                  Status
-                </th>
-
-                <th className="px-6 py-4 text-left">
-                  Actions
-                </th>
-
-              </tr>
-
-            </thead>
-
-
-
-            <tbody>
-
-              {loading ? (
-
-                <tr>
-
-                  <td
-                    colSpan="6"
-                    className="text-center py-6"
-                  >
-
-                    Loading...
-
-                  </td>
-
-                </tr>
-
-              )
-
-              : data.results.length===0 ? (
-
-                <tr>
-
-                  <td
-                    colSpan="6"
-                    className="text-center py-6"
-                  >
-
-                    No Records Found
-
-                  </td>
-
-                </tr>
-
-              )
-
-              :
-
-              (
-
-                data.results.map((record)=>(
-
-                  <tr
-                    key={record.id}
-                    className="border-b hover:bg-gray-50"
-                  >
-
-                    <td className="px-6 py-4">
-
-                      {record.facility_name ||
-
-                       record.facility_code ||
-
-                       "Unknown"}
-
-                    </td>
-
-
-
-                    <td className="px-6 py-4">
-
-                      {record.source_type}
-
-                    </td>
-
-
-
-                    <td className="px-6 py-4">
-
-                      {record.quantity}
-
-                      {" "}
-
-                      {record.unit}
-
-                    </td>
-
-
-
-                    <td className="px-6 py-4">
-
-                      {
-
-                        record.date ?
-
-                        new Date(
-                          record.date
-                        ).toLocaleDateString()
-
-                        :
-
-                        "-"
-
-                      }
-
-                    </td>
-
-
-
-                    <td className="px-6 py-4">
-
-                      {
-
-                      record.is_flagged ?
-
-                      (
-
-                      <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 flex items-center gap-1 w-fit">
-
-                      <AlertTriangle size={14}/>
-
-                      Flagged
-
-                      </span>
-
-                      )
-
-                      :
-
-                      (
-
-                      <span className="px-3 py-1 rounded-full bg-green-100 text-green-700">
-
-                      Approved
-
-                      </span>
-
-                      )
-
-                      }
-
-                    </td>
-
-
-
-                    <td className="px-6 py-4">
-
-                      <button
-
-                        onClick={()=>setSelectedRecord(record)}
-
-                        className="text-blue-600 flex items-center gap-1"
-
-                      >
-
-                        <Eye size={16}/>
-
-                        View
-
-                      </button>
-
-                    </td>
-
-                  </tr>
-
-                ))
-
-              )}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-
-
-        <div className="p-4 border-t">
-
-          Total Records:
-
-          {" "}
-
-          <b>
-
-          {data.count}
-
-          </b>
-
-        </div>
+        </button>
 
       </div>
 
 
 
-
-      {/* popup */}
-
+      {/* Empty state */}
 
       {
 
-      selectedRecord &&
+      !loading &&
+
+      data.results.length===0 ?
 
       (
 
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div className="p-12 text-center">
 
-      <div className="bg-white p-6 rounded-xl w-[450px]">
+      <FileText
+      size={55}
+      className="mx-auto text-gray-300"
+      />
 
-      <div className="flex justify-between mb-4">
+      <h3 className="mt-4 text-xl font-semibold">
 
-      <h2 className="text-xl font-bold">
+      No Records Found
 
-      Record Details
+      </h3>
 
-      </h2>
+      <p className="text-gray-500 mt-2">
 
-      <button
-      onClick={()=>setSelectedRecord(null)}
-      >
+      Upload CSV files to begin ESG ingestion
 
-      <X/>
-
-      </button>
+      </p>
 
       </div>
 
-
-      <div className="space-y-3">
-
-      <p>
-
-      <b>Facility:</b>
-
-      {" "}
-
-      {selectedRecord.facility_name}
-
-      </p>
-
-      <p>
-
-      <b>Source:</b>
-
-      {" "}
-
-      {selectedRecord.source_type}
-
-      </p>
-
-      <p>
-
-      <b>Quantity:</b>
-
-      {" "}
-
-      {selectedRecord.quantity}
-
-      {" "}
-
-      {selectedRecord.unit}
-
-      </p>
-
-      <p>
-
-      <b>Date:</b>
-
-      {" "}
-
-      {selectedRecord.date}
-
-      </p>
-
-      <p>
-
-      <b>Status:</b>
-
-      {" "}
-
-      {
-
-      selectedRecord.is_flagged ?
-
-      "Flagged"
+      )
 
       :
 
-      "Approved"
+      (
+
+
+      <div className="overflow-x-auto">
+
+      <table className="w-full">
+
+      <thead className="bg-gray-50 border-b">
+
+      <tr>
+
+      <th className="px-6 py-4 text-left">
+
+      Facility
+
+      </th>
+
+      <th className="px-6 py-4 text-left">
+
+      Source
+
+      </th>
+
+      <th className="px-6 py-4 text-left">
+
+      Quantity
+
+      </th>
+
+      <th className="px-6 py-4 text-left">
+
+      Date
+
+      </th>
+
+      <th className="px-6 py-4 text-left">
+
+      Status
+
+      </th>
+
+      <th className="px-6 py-4 text-left">
+
+      Actions
+
+      </th>
+
+      </tr>
+
+      </thead>
+
+
+
+      <tbody>
+
+      {
+
+      loading ?
+
+      (
+
+      <tr>
+
+      <td
+      colSpan="6"
+      className="text-center py-10"
+      >
+
+      Loading records...
+
+      </td>
+
+      </tr>
+
+      )
+
+      :
+
+      (
+
+      data.results.map((record)=>(
+
+      <tr
+      key={record.id}
+      className="border-b hover:bg-blue-50 transition"
+      >
+
+      <td className="px-6 py-4 font-medium">
+
+      {
+
+      record.facility_name ||
+
+      record.facility_code ||
+
+      "Unknown"
 
       }
 
-      </p>
+      </td>
 
-      </div>
 
-      </div>
+
+      <td className="px-6 py-4">
+
+      {record.source_type}
+
+      </td>
+
+
+
+      <td className="px-6 py-4">
+
+      {record.quantity}
+
+      {" "}
+
+      {record.unit}
+
+      </td>
+
+
+
+      <td className="px-6 py-4">
+
+      {
+
+      record.date ?
+
+      new Date(
+      record.date
+      ).toLocaleDateString()
+
+      :
+
+      "-"
+
+      }
+
+      </td>
+
+
+
+      <td className="px-6 py-4">
+
+      {
+
+      record.is_flagged ?
+
+      (
+
+      <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full flex items-center gap-1 w-fit">
+
+      <AlertTriangle size={14}/>
+
+      Flagged
+
+      </span>
+
+      )
+
+      :
+
+      (
+
+      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full">
+
+      Approved
+
+      </span>
+
+      )
+
+      }
+
+      </td>
+
+
+
+      <td className="px-6 py-4">
+
+      <button
+
+      onClick={()=>
+      setSelectedRecord(record)
+      }
+
+      className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
+
+      >
+
+      <Eye size={16}/>
+
+      View
+
+      </button>
+
+      </td>
+
+      </tr>
+
+      ))
+
+      )
+
+      }
+
+      </tbody>
+
+      </table>
 
       </div>
 
       )
 
       }
+
+
+
+      <div className="p-5 border-t bg-gray-50">
+
+      Total Records:
+
+      {" "}
+
+      <b>
+
+      {data.count}
+
+      </b>
+
+      </div>
+
+    </div>
+
+
+
+
+    {/* Modal */}
+
+
+    {
+
+    selectedRecord &&
+
+    (
+
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+    <div className="bg-white rounded-2xl p-7 w-[500px] shadow-xl">
+
+    <div className="flex justify-between mb-6">
+
+    <h2 className="text-2xl font-bold">
+
+    Record Details
+
+    </h2>
+
+    <button
+
+    onClick={()=>
+
+    setSelectedRecord(null)
+
+    }
+
+    >
+
+    <X/>
+
+    </button>
+
+    </div>
+
+
+    <div className="space-y-4">
+
+    <div>
+
+    <b>Facility:</b>
+
+    {" "}
+
+    {selectedRecord.facility_name}
+
+    </div>
+
+
+    <div>
+
+    <b>Source:</b>
+
+    {" "}
+
+    {selectedRecord.source_type}
+
+    </div>
+
+
+    <div>
+
+    <b>Quantity:</b>
+
+    {" "}
+
+    {selectedRecord.quantity}
+
+    {" "}
+
+    {selectedRecord.unit}
+
+    </div>
+
+
+    <div>
+
+    <b>Date:</b>
+
+    {" "}
+
+    {selectedRecord.date}
+
+    </div>
+
+
+    <div>
+
+    <b>Status:</b>
+
+    {" "}
+
+    {
+
+    selectedRecord.is_flagged ?
+
+    "Flagged"
+
+    :
+
+    "Approved"
+
+    }
+
+    </div>
+
+    </div>
+
+    </div>
+
+    </div>
+
+    )
+
+    }
 
     </>
 
