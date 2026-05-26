@@ -6,6 +6,46 @@ A production-quality full-stack application for ingesting, normalizing, and revi
 
 ---
 
+
+
+## 🌐 Live Deployment
+
+### Frontend (React + Vite)
+🔗 https://breathe-esg-frontend-likhitha.onrender.com
+
+### Backend API (Django + DRF)
+🔗 https://breathe-esg-backend-aeho.onrender.com
+
+### Admin Dashboard
+🔗 https://breathe-esg-backend-aeho.onrender.com/admin/
+
+### GitHub Repository
+🔗 https://github.com/TensorDevLJ/breathe-esg-ingestion-platform
+
+---
+
+### Demo Credentials
+
+```txt
+Email: admin@breathe.local
+Role: Analyst/Admin
+```
+
+---
+
+### Features Working in Live Deployment
+
+✅ CSV Upload (SAP / Utility / Travel)  
+✅ PostgreSQL Database Integration  
+✅ Data Normalization Pipeline  
+✅ Suspicious Record Detection  
+✅ Review Queue Workflow  
+✅ Audit Trail Tracking  
+✅ Dashboard Analytics & Charts  
+✅ Multi-source ESG Data Processing  
+✅ Render Deployment (Frontend + Backend + PostgreSQL)
+---
+
 ## 📋 Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
