@@ -34,45 +34,117 @@ def upload_csv(request):
 
         df = pd.read_csv(file)
 
+        # =========================
+        # CREATE / GET COMPANY
+        # =========================
+
         company, _ = Company.objects.get_or_create(
 
             name="Breathe ESG",
 
             defaults={
-               "is_active": True
-           }
+                "is_active": True
+            }
 
-         )
+        )
+
+        # =========================
+        # DETECT SOURCE TYPE
+        # =========================
+
+        columns = [col.lower() for col in df.columns]
+
+        source_name = "TRAVEL"
+
+        if "meterid" in columns or "consumption" in columns:
+
+            source_name = "ELECTRICITY"
+
+        elif "plantcode" in columns or "material" in columns:
+
+            source_name = "SAP"
+
+        elif "traveltype" in columns or "origin" in columns:
+
+            source_name = "TRAVEL"
+
+        # =========================
+        # CREATE / GET DATASOURCE
+        # =========================
 
         datasource, _ = DataSource.objects.get_or_create(
 
-            name="TRAVEL",
+            name=source_name,
 
             defaults={
-               "company": company,
-              "is_active": True
-    }
 
-)
+                "company": company,
+
+                "is_active": True
+
+            }
+
+        )
 
         count = 0
         suspicious_count = 0
 
+        # =========================
+        # PROCESS ROWS
+        # =========================
+
         for i, row in df.iterrows():
 
-            quantity = float(
-                row.get("quantity", 0)
-            )
+            # =========================
+            # GET QUANTITY
+            # =========================
 
-            # suspicious rule
+            if source_name == "ELECTRICITY":
+
+                quantity = float(
+                    row.get("Consumption", 0)
+                )
+
+                unit = row.get("Unit", "kWh")
+
+            elif source_name == "SAP":
+
+                quantity = float(
+                    row.get("Quantity", 0)
+                )
+
+                unit = row.get("Unit", "liters")
+
+            elif source_name == "TRAVEL":
+
+                quantity = float(
+                    row.get("Distance", 0)
+                )
+
+                unit = row.get("Unit", "km")
+
+            else:
+
+                quantity = 0
+                unit = "unknown"
+
+            # =========================
+            # FLAG RULE
+            # =========================
+
             if quantity > 3000:
 
                 status = "FAILED"
+
                 suspicious_count += 1
 
             else:
 
                 status = "SUCCESS"
+
+            # =========================
+            # CREATE RAW RECORD
+            # =========================
 
             raw_record, created = RawRecord.objects.get_or_create(
 
@@ -89,25 +161,59 @@ def upload_csv(request):
                     "raw_data": row.to_dict(),
 
                     "processing_status": status
+
                 }
+
             )
 
+            # =========================
+            # CREATE NORMALIZED RECORD
+            # =========================
 
             if created:
 
                 source = datasource.name.upper()
 
+                # -------------------------
+                # FACILITY
+                # -------------------------
+
                 facility = "Corporate Travel"
 
                 if source == "SAP":
+
                     facility = "SAP Operations"
 
                 elif source == "ELECTRICITY":
+
                     facility = "Bangalore Manufacturing Plant"
 
                 elif source == "TRAVEL":
+
                     facility = "Corporate Travel"
 
+                # -------------------------
+                # SCOPE + CATEGORY
+                # -------------------------
+
+                if source == "SAP":
+
+                    scope = 1
+                    category = "fuel_other"
+
+                elif source == "ELECTRICITY":
+
+                    scope = 2
+                    category = "electricity_grid"
+
+                else:
+
+                    scope = 3
+                    category = "travel_ground"
+
+                # =========================
+                # CREATE NORMALIZED ENTRY
+                # =========================
 
                 record = NormalizedEmissionRecord.objects.create(
 
@@ -117,9 +223,9 @@ def upload_csv(request):
 
                     source_type=source,
 
-                    scope=3,
+                    scope=scope,
 
-                    category="general",
+                    category=category,
 
                     facility_code=f"REC{i+1}",
 
@@ -127,7 +233,7 @@ def upload_csv(request):
 
                     quantity=quantity,
 
-                    unit=row.get("unit", "km"),
+                    unit=unit,
 
                     quantity_standardized=quantity * 0.25,
 
@@ -144,8 +250,10 @@ def upload_csv(request):
 
                 )
 
+                # =========================
+                # REVIEW QUEUE
+                # =========================
 
-                # create review item only for flagged records
                 if quantity > 3000:
 
                     ReviewQueue.objects.create(
@@ -159,10 +267,13 @@ def upload_csv(request):
                         severity="HIGH",
 
                         status="PENDING"
+
                     )
 
+                # =========================
+                # AUDIT LOG
+                # =========================
 
-                # create audit history
                 AuditLog.objects.create(
 
                     company=company,
@@ -175,6 +286,9 @@ def upload_csv(request):
 
             count += 1
 
+        # =========================
+        # SUCCESS RESPONSE
+        # =========================
 
         return JsonResponse({
 
@@ -195,6 +309,10 @@ def upload_csv(request):
         })
 
 
+# =========================================
+# DASHBOARD STATS
+# =========================================
+
 def dashboard_stats(request):
 
     total = NormalizedEmissionRecord.objects.count()
@@ -211,10 +329,8 @@ def dashboard_stats(request):
         status="PENDING"
     ).count()
 
-
     by_source = {}
     by_scope = {}
-
 
     for item in (
 
@@ -228,8 +344,8 @@ def dashboard_stats(request):
         by_source[source] = (
 
             by_source.get(source, 0) + 1
-        )
 
+        )
 
     for item in (
 
@@ -243,8 +359,8 @@ def dashboard_stats(request):
         by_scope[scope] = (
 
             by_scope.get(scope, 0) + 1
-        )
 
+        )
 
     return JsonResponse({
 
@@ -265,10 +381,15 @@ def dashboard_stats(request):
             "approved": approved,
 
             "flagged": flagged
+
         }
 
     })
 
+
+# =========================================
+# RECORDS LIST
+# =========================================
 
 def records_list(request):
 
@@ -311,6 +432,10 @@ def records_list(request):
 
     })
 
+
+# =========================================
+# REVIEW QUEUE
+# =========================================
 
 def review_queue(request):
 
@@ -365,6 +490,10 @@ def review_queue(request):
     })
 
 
+# =========================================
+# APPROVE REVIEW
+# =========================================
+
 @csrf_exempt
 def approve_review(request, id):
 
@@ -393,6 +522,10 @@ def approve_review(request, id):
     })
 
 
+# =========================================
+# REJECT REVIEW
+# =========================================
+
 @csrf_exempt
 def reject_review(request, id):
 
@@ -420,6 +553,10 @@ def reject_review(request, id):
 
     })
 
+
+# =========================================
+# AUDIT LOGS
+# =========================================
 
 def audit_logs(request):
 
